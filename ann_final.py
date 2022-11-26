@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import roc_curve, roc_auc_score, f1_score
+from sklearn.metrics import roc_curve, roc_auc_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
 import scikitplot as skplt
 import matplotlib.pyplot as plt
@@ -25,16 +25,14 @@ class MLP(object):
             hidden_layers (list): A list of ints for the hidden layers
             num_outputs (int): Number of outputs
         """
-        print("=========hidden_layers=========")
-        print(hidden_layers)
+        print("HIDDEN LAYERS: {} \n".format(hidden_layers))
         self.num_inputs = num_inputs
         self.hidden_layers = hidden_layers
         self.num_outputs = num_outputs
 
         # create a generic representation of the layers
         layers = [num_inputs] + hidden_layers + [num_outputs]
-        print("=========layers=========")
-        print(layers)
+        print("LAYERS: {} \n".format(layers))
 
         # create random connection weights for the layers
         weights = []
@@ -42,8 +40,7 @@ class MLP(object):
             w = np.random.rand(layers[i], layers[i + 1])
             weights.append(w)
         self.weights = weights
-        print("=========weights=========")
-        print(weights)
+        print("WEIGHTS : {} \n".format(weights))
 
 
         # save derivatives per layer
@@ -52,8 +49,7 @@ class MLP(object):
             d = np.zeros((layers[i], layers[i + 1]))
             derivatives.append(d)
         self.derivatives = derivatives
-        print("=========derivatives=========")
-        print(derivatives)
+        print("DERIVATES : {} \n".format(derivatives))
 
 
         # save activations per layer
@@ -62,8 +58,7 @@ class MLP(object):
             a = np.zeros(layers[i])
             activations.append(a)
         self.activations = activations
-        print("a")
-        print(activations)
+        print("ACTIVATIONS : {} \n".format(activations))
 
     def roc_auc_f1(self, mlp_clf):
         """
@@ -73,9 +68,9 @@ class MLP(object):
         mlp_clf.fit(Xtrain, ytrain)
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
-        print("=========fpr_rf : {}=========".format(fpr_rf))
-        print("=========tpr_r : {}f=========".format(tpr_rf))
-        print("=========thresholds_rf : {}=========".format(thresholds_rf))
+        print("FPR RF : {} \n".format(fpr_rf))
+        print("TPR RF : {} \n".format(tpr_rf))
+        print("THRESHOLD RF : {} \n".format(thresholds_rf))
 
         """
         Plot ROC 
@@ -88,7 +83,7 @@ class MLP(object):
         AUC
         """
         auc = roc_auc_score(ytest, mlp_clf.predict_proba(Xtest)[:,1])
-        print('=========AUC: %.3f=========' % auc)
+        print('AUC: %.3f \n' % auc)
 
         """
         F1 score
@@ -102,8 +97,11 @@ class MLP(object):
 
         #calculate F1 score
         f1_score_val = f1_score(actual, pred)
-        print("=========f1_score_val : {}=========".format(f1_score_val))
-        print()
+        print("F1 SCORE : {} \n".format(f1_score_val))
+
+        #calculate F1 score
+        f1_score_val = f1_score(actual, pred)
+        print("ACCURACY SCORE : {} \n".format(f1_score_val))
 
     def train_test_curve(self, mlp_clf):
         """
@@ -258,7 +256,6 @@ class MLP(object):
             print("Error: {} at epoch {}".format(sum_errors / len(Xtrain), i+1))
 
         print("=====***====Training complete!=====***====")
-        print("=====")
 
 
     def gradient_descent(self, learningRate=1):
@@ -323,10 +320,10 @@ if __name__ == "__main__":
     Xtrain = sc.transform(Xtrain)
     Xtest = sc.transform(Xtest)
 
-    print(f"=========> Shape of train set is {Xtrain.shape}")
-    print(f"=========> Shape of test set is {Xtest.shape}")
-    print(f"=========> Shape of train label is {ytrain.shape}")
-    print(f"=========> Shape of test labels is {ytest.shape}")
+    print(f"Shape of train set is {Xtrain.shape} \n")
+    print(f"Shape of test set is {Xtest.shape} \n")
+    print(f"Shape of train label is {ytrain.shape} \n")
+    print(f"Shape of test labels is {ytest.shape} \n")
 
     Xtrain, Xtest, ytrain, ytest = train_test_split(X, y_label, test_size=0.90, random_state=2, shuffle=True)
     num_rows, num_cols = Xtrain.shape
@@ -343,10 +340,7 @@ if __name__ == "__main__":
         if (post_score > score) :
             hiddle_layer = find_hiddle_layers[i]
         post_score = score
-    print("hiddle_layer")
-    print(hiddle_layer)
-    print("num_cols")
-    print(num_cols)
+    
     mlp = MLP(num_cols, hiddle_layer, 1)
     
     # model
@@ -361,7 +355,7 @@ if __name__ == "__main__":
     # Error after bagging
    
     testing_error = mlp.compute_error(ytest, y_prediction)
-    print("=========Testing error after bagging {}=========".format(testing_error))
+    print("Testing error after bagging {}".format(testing_error))
 
     output = mlp.forward_propagate(Xtest)
 
