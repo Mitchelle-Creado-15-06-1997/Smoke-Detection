@@ -12,50 +12,51 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import learning_curve
 from sklearn.feature_selection import VarianceThreshold
 
-class MLP(object):
-    """A Multilayer Perceptron class.
+class ANN(object):
+    """
+    Artificial Neural Networks
     """
 
-    def __init__(self, num_inputs=3, hidden_layers=[3, 3], num_outputs=14):
-        """Constructor for the MLP. Takes the number of inputs,
-            a variable number of hidden layers, and number of outputs
+    def __init__(self, number_of_inputs=4, hidden_layer=[4, 4], number_of_outputs=14):
+        """
+            We construct the ANN by takes Inputs, Hidden layers (variable number) and output
 
         Args:
-            num_inputs (int): Number of inputs
-            hidden_layers (list): A list of ints for the hidden layers
-            num_outputs (int): Number of outputs
+            number_of_inputs (int): Number of inputs
+            hidden_layer (list): A list of ints for the hidden layers
+            number_of_outputs (int): Number of outputs
         """
-        print("HIDDEN LAYERS: {} \n".format(hidden_layers))
-        self.num_inputs = num_inputs
-        self.hidden_layers = hidden_layers
-        self.num_outputs = num_outputs
+        print("HIDDEN LAYERS: {} \n".format(hidden_layer))
+        self.number_of_inputs = number_of_inputs
+        self.hidden_layer = hidden_layer
+        self.number_of_outputs = number_of_outputs
 
-        # create a generic representation of the layers
-        layers = [num_inputs] + hidden_layers + [num_outputs]
-        print("LAYERS: {} \n".format(layers))
+        # Calculate the sum of all the layers
+        cum_layers = [number_of_inputs] + hidden_layer + [number_of_outputs]
+        print("LAYERS: {} \n".format(cum_layers))
 
-        # create random connection weights for the layers
+        # Generate the weights for the layers
         weights = []
-        for i in range(len(layers) - 1):
-            w = np.random.rand(layers[i], layers[i + 1])
+        for i in range(len(cum_layers) - 1):
+            w = np.random.rand(cum_layers[i], cum_layers[i + 1])
             weights.append(w)
         self.weights = weights
         print("WEIGHTS : {} \n".format(weights))
 
 
-        # save derivatives per layer
+        # Calculate the derivative of the layer
         derivatives = []
-        for i in range(len(layers) - 1):
-            d = np.zeros((layers[i], layers[i + 1]))
+        for i in range(len(cum_layers) - 1):
+            d = np.zeros((cum_layers[i], cum_layers[i + 1]))
             derivatives.append(d)
         self.derivatives = derivatives
         print("DERIVATES : {} \n".format(derivatives))
 
 
-        # save activations per layer
+        # Get the activation of the layers
         activations = []
-        for i in range(len(layers)):
-            a = np.zeros(layers[i])
+        for i in range(len(cum_layers)):
+            a = np.zeros(cum_layers[i])
             activations.append(a)
         self.activations = activations
         print("ACTIVATIONS : {} \n".format(activations))
@@ -66,6 +67,7 @@ class MLP(object):
         """
         
         mlp_clf.fit(Xtrain, ytrain)
+
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
         print("FPR RF : {} \n".format(fpr_rf))
@@ -75,7 +77,6 @@ class MLP(object):
         """
         Plot ROC 
         """
-
         skplt.metrics.plot_roc_curve(ytest, mlp_clf.predict_proba(Xtest))
         plt.show()
 
@@ -88,18 +89,17 @@ class MLP(object):
         """
         F1 score
         """
-
-        #define array of actual classes
+        # It is the array of actual classes
         actual = np.repeat([1, 0], repeats=[160, 240])
 
-        #define array of predicted classes
+        # It is the array of predicted classes
         pred = np.repeat([1, 0, 1, 0], repeats=[120, 40, 70, 170])
 
         #calculate F1 score
         f1_score_val = f1_score(actual, pred)
         print("F1 SCORE : {} \n".format(f1_score_val))
 
-        #calculate F1 score
+        # F1 score 
         f1_score_val = f1_score(actual, pred)
         print("ACCURACY SCORE : {} \n".format(f1_score_val))
 
@@ -108,7 +108,7 @@ class MLP(object):
         Train test curve
         """
 
-        train_sizes, train_scores, test_scores = learning_curve(estimator = mlp_clf,X = X, y = y_label, train_sizes = [1, 14, 17], cv = 5)
+        train_sizes, train_scores, test_scores = learning_curve(estimator = mlp_clf,X = X, y = Y, train_sizes = [1, 14, 17], cv = 5)
         train_mean = np.mean(train_scores, axis=1)
         train_std = np.std(train_scores, axis=1)
         test_mean = np.mean(test_scores, axis=1)
@@ -312,24 +312,23 @@ if __name__ == "__main__":
     X = smoke_copy.drop(columns=['Fire Alarm']).values
     sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
     new_feature = sel.fit_transform(X)
-    y_label = smoke_copy['Fire Alarm'].values 
-    Xtrain, Xtest, ytrain, ytest = train_test_split(X, y_label, test_size=0.2, random_state=2)
+    Y = smoke_copy['Fire Alarm'].values 
+    Xtrain, Xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.2, random_state=2)
 
     sc = StandardScaler()
     sc.fit(Xtrain)
     Xtrain = sc.transform(Xtrain)
     Xtest = sc.transform(Xtest)
 
-    print(f"Shape of train set is {Xtrain.shape} \n")
-    print(f"Shape of test set is {Xtest.shape} \n")
-    print(f"Shape of train label is {ytrain.shape} \n")
-    print(f"Shape of test labels is {ytest.shape} \n")
+    print(f"The Shape of train set = {Xtrain.shape} \n")
+    print(f"The Shape of test set = {Xtest.shape} \n")
+    print(f"The Shape of train label = {ytrain.shape} \n")
+    print(f"The Shape of test labels = {ytest.shape} \n")
 
-    Xtrain, Xtest, ytrain, ytest = train_test_split(X, y_label, test_size=0.90, random_state=2, shuffle=True)
+    Xtrain, Xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.90, random_state=2, shuffle=True)
     num_rows, num_cols = Xtrain.shape
-    # create a Multilayer Perceptron with one hidden layer
-    # mlp = ANN(num_rows, [2,2] , 1)
 
+    # Find the best hidden layer
     post_score = 0
         
     find_hiddle_layers = [[20], [30], [40]]
@@ -341,7 +340,7 @@ if __name__ == "__main__":
             hiddle_layer = find_hiddle_layers[i]
         post_score = score
     
-    mlp = MLP(num_cols, hiddle_layer, 1)
+    mlp = ANN(num_cols, hiddle_layer, 1)
     
     # model
     model = mlp.model_ann(hiddle_layer)
@@ -353,7 +352,6 @@ if __name__ == "__main__":
     y_prediction = mlp.bagging(model)
 
     # Error after bagging
-   
     testing_error = mlp.compute_error(ytest, y_prediction)
     print("Testing error after bagging {}".format(testing_error))
 
