@@ -36,22 +36,21 @@ class ANN(object):
         print("LAYERS: {} \n".format(cum_layers))
 
         # Generate the weights for the layers
+        # Calculate the derivative of the layer
         weights = []
+        derivatives = []
         for i in range(len(cum_layers) - 1):
             w = np.random.rand(cum_layers[i], cum_layers[i + 1])
             weights.append(w)
-        self.weights = weights
-        print("WEIGHTS : {} \n".format(weights))
 
-
-        # Calculate the derivative of the layer
-        derivatives = []
-        for i in range(len(cum_layers) - 1):
             d = np.zeros((cum_layers[i], cum_layers[i + 1]))
             derivatives.append(d)
-        self.derivatives = derivatives
-        print("DERIVATES : {} \n".format(derivatives))
 
+        self.weights = weights
+        self.derivatives = derivatives
+        print("WEIGHTS : {} \n".format(weights))
+        print("DERIVATES : {} \n".format(derivatives))
+        
 
         # Get the activation of the layers
         activations = []
@@ -67,7 +66,6 @@ class ANN(object):
         """
         
         mlp_clf.fit(Xtrain, ytrain)
-
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
         print("FPR RF : {} \n".format(fpr_rf))
