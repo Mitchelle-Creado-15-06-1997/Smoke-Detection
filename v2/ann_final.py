@@ -34,21 +34,20 @@ class MLP(object):
         layers = [num_inputs] + hidden_layers + [num_outputs]
         print("LAYERS: {} \n".format(layers))
 
-        # create random connection weights for the layers
+        # create random connection weights for the layers & save derivatives per layer
         weights = []
+        derivatives = []
         for i in range(len(layers) - 1):
             w = np.random.rand(layers[i], layers[i + 1])
             weights.append(w)
-        self.weights = weights
-        print("WEIGHTS : {} \n".format(weights))
-
-
-        # save derivatives per layer
-        derivatives = []
-        for i in range(len(layers) - 1):
+            
             d = np.zeros((layers[i], layers[i + 1]))
             derivatives.append(d)
+            
+        self.weights = weights
         self.derivatives = derivatives
+        
+        print("WEIGHTS : {} \n".format(weights))
         print("DERIVATES : {} \n".format(derivatives))
 
 
@@ -66,6 +65,7 @@ class MLP(object):
         """
         
         mlp_clf.fit(Xtrain, ytrain)
+        
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
         print("FPR RF : {} \n".format(fpr_rf))
