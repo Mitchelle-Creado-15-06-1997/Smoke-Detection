@@ -1,5 +1,6 @@
 import numpy as np
-from random import random
+from random import random, randrange
+import random
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -11,6 +12,8 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import learning_curve
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_validate
 
 class ANN(object):
     """
@@ -60,7 +63,20 @@ class ANN(object):
         self.activations = activations
         print("ACTIVATIONS : {} \n".format(activations))
 
-    def roc_auc_f1(self, mlp_clf):
+    def get_feature_importance(self, j, n, mlp_clf):
+        mlp_clf.fit(Xtest, ytest)
+        s = accuracy_score(ytest, mlp_clf.predict_proba(Xtest)[:,1].round()) # baseline score
+        total = 0.0
+        for i in range(n):
+            perm = np.random.permutation(range(Xtest.shape[0]))
+            X_test_ = Xtest.copy()
+            X_test_[:, j] = Xtest[perm, j]
+            y_pred_ = clf.predict(X_test_)
+            s_ij = accuracy_score(ytest, y_pred_)
+            total += s_ij
+        return s - total / n
+
+    def roc_auc_cross_validation(self, mlp_clf):
         """
         roc_auc
         """
@@ -68,9 +84,9 @@ class ANN(object):
         mlp_clf.fit(Xtrain, ytrain)
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
-        print("FPR RF : {} \n".format(fpr_rf))
-        print("TPR RF : {} \n".format(tpr_rf))
-        print("THRESHOLD RF : {} \n".format(thresholds_rf))
+        print("FPR RF with sklearn model: {} \n".format(fpr_rf))
+        print("TPR RF with sklearn model: {} \n".format(tpr_rf))
+        print("THRESHOLD RF with sklearn model: {} \n".format(thresholds_rf))
 
         """
         Plot ROC 
@@ -82,31 +98,44 @@ class ANN(object):
         AUC
         """
         auc = roc_auc_score(ytest, mlp_clf.predict_proba(Xtest)[:,1])
-        print('AUC: %.3f \n' % auc)
+        print('AUC with sklearn model: %.3f \n' % auc)
 
         """
-        F1 score
+        Accuracy score 
         """
-        # It is the array of actual classes
-        actual = np.repeat([1, 0], repeats=[160, 240])
+        accuracy_score_value = accuracy_score(ytest, mlp_clf.predict_proba(Xtest)[:,1].round(), normalize=True, sample_weight=None)
+        print("Accuracy Score with sklearn model: {}".format(accuracy_score_value))
 
-        # It is the array of predicted classes
-        pred = np.repeat([1, 0, 1, 0], repeats=[120, 40, 70, 170])
+        """
+        Cross Validation
+        """
+        _scoring = ['accuracy', 'precision', 'recall', 'f1']
+        results = cross_validate(estimator=model,X=X,y=Y,cv=6,scoring=_scoring,return_train_score=True)
 
-        #calculate F1 score
-        f1_score_val = f1_score(actual, pred)
-        print("F1 SCORE : {} \n".format(f1_score_val))
-
-        # F1 score 
-        f1_score_val = f1_score(actual, pred)
-        print("ACCURACY SCORE : {} \n".format(f1_score_val))
+        return {"Training Accuracy scores": results['train_accuracy'],
+              "Mean Training Accuracy": results['train_accuracy'].mean()*100,
+              "Training Precision scores": results['train_precision'],
+              "Mean Training Precision": results['train_precision'].mean(),
+              "Training Recall scores": results['train_recall'],
+              "Mean Training Recall": results['train_recall'].mean(),
+              "Training F1 scores": results['train_f1'],
+              "Mean Training F1 Score": results['train_f1'].mean(),
+              "Validation Accuracy scores": results['test_accuracy'],
+              "Mean Validation Accuracy": results['test_accuracy'].mean()*100,
+              "Validation Precision scores": results['test_precision'],
+              "Mean Validation Precision": results['test_precision'].mean(),
+              "Validation Recall scores": results['test_recall'],
+              "Mean Validation Recall": results['test_recall'].mean(),
+              "Validation F1 scores": results['test_f1'],
+              "Mean Validation F1 Score": results['test_f1'].mean()
+              }
 
     def train_test_curve(self, mlp_clf):
         """
         Train test curve
         """
 
-        train_sizes, train_scores, test_scores = learning_curve(estimator = mlp_clf,X = X, y = Y, train_sizes = [1, 14, 17], cv = 5)
+        train_sizes, train_scores, test_scores = learning_curve(estimator = mlp_clf,X = Xtrain, y = ytrain, train_sizes = [1, 14, 17], cv = 5)
         train_mean = np.mean(train_scores, axis=1)
         train_std = np.std(train_scores, axis=1)
         test_mean = np.mean(test_scores, axis=1)
@@ -130,14 +159,32 @@ class ANN(object):
         mlp_clf = MLPClassifier(hidden_layer_sizes=hidden, max_iter = 1000,activation = 'logistic', solver = 'adam')
         return mlp_clf
 
-    def bagging(self, mlp_clf):
+    # def bagging(self, x, y, number_samples=5): 
+    #     bag = []
+    #     acc_old_output = 0
+    #     for i in range(number_samples):
+    #         sampling_x = []
+    #         sampling_y = []
+    #         for item in range(y.size):
+    #             r_index = random.randrange(y.size)
+    #             sampling_x.append(x[r_index,:])
+    #             sampling_y.append(y[r_index])
+    #         self.train(sampling_x, sampling_y)
+    #         output = self.forward_propagate(sampling_x)
+    #         acc = accuracy_score(sampling_y, output.round(), normalize=True, sample_weight=None)
+
+    #         if (acc_old_output < acc):
+    #             acc_old_output = acc
+    #     return acc_old_output, sampling_y
+        
+    def bagging_sklearn(self, mlp_clf):
         """
         bagging
         """
         bag_clf = BaggingClassifier(
         mlp_clf,
         n_estimators=13,
-        max_samples=1.0,
+        max_samples=5,
         max_features=13,
         random_state=None,
         n_jobs=-1
@@ -220,7 +267,7 @@ class ANN(object):
             error = np.dot(delta, self.weights[i].T)
 
 
-    def train(self, inputs, targets, epochs, learning_rate):
+    def train(self, inputs, targets, epochs = 5, learning_rate = 1):
         """Trains model running forward prop and backprop
         Args:
             inputs (ndarray): X
@@ -329,12 +376,12 @@ if __name__ == "__main__":
     # Find the best hidden layer
     post_score = 0
         
-    find_hiddle_layers = [[20], [30], [40]]
+    find_hiddle_layers = [[13], [14], [11]]
     hiddle_layer = find_hiddle_layers[0]
     for i in range(len(find_hiddle_layers)):
         clf = MLPClassifier(hidden_layer_sizes=find_hiddle_layers[i], random_state=1, max_iter=300).fit(Xtrain, ytrain)
         score = clf.score(Xtrain, ytrain)
-        if (post_score > score) :
+        if (post_score < score) :
             hiddle_layer = find_hiddle_layers[i]
         post_score = score
     
@@ -343,18 +390,67 @@ if __name__ == "__main__":
     # model
     model = mlp.model_ann(hiddle_layer)
 
-    mlp.roc_auc_f1(model)
+    # Feature importances - - (For feature importance please incomment the following lines of code)
+    """
+    # Start 
+    f = []
+    for j in range(Xtest.shape[1]):
+        feature = mlp.get_feature_importance(j, 100, model)
+        f.append(feature)
+    # Plot
+    plt.figure(figsize=(10, 5))
+    plt.bar(range(Xtest.shape[1]), f, color="r", alpha=0.7)
+    plt.xticks(ticks=range(Xtest.shape[1]), labels = ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
+       'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
+       'NC0.5', 'NC1.0', 'NC2.5', 'CNT'])
+    # data = pd.DataFrame({"column1": ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
+    #    'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
+    #    'NC0.5', 'NC1.0', 'NC2.5', 'CNT']})
+    # data.plot(xticks=data.column1)
+    plt.xlabel("Feature")
+    plt.ylabel("Importance")
+    plt.title("Feature importances")
+    plt.show()
+
+    #end
+    """
+    details = mlp.roc_auc_cross_validation(model)
+
+    print("\n----Cross Validation----\n")
+    print(details)
+    print("\n")
 
     mlp.train_test_curve(model)
 
-    y_prediction = mlp.bagging(model)
+    """
+    Output
+    """
+    output = mlp.forward_propagate(Xtest)
+    
+    accuracy_score_own_model = accuracy_score(ytest, output.round(), normalize=True, sample_weight=None)
+    print("Accuracy Score with own model: {}".format(accuracy_score_own_model))
+    print()
+    print("=========Testing with inputs {} and output got is {}=========".format(Xtest, output.round()))
+    
+
+    """
+    SK learn bagging
+    """
+    print("\n\n================================SK BAGGING=======================================\n\n")
+    mlp_bagging_sk = ANN(num_cols, hiddle_layer, 1)
+    y_prediction = mlp_bagging_sk.bagging_sklearn(model)
 
     # Error after bagging
-    testing_error = mlp.compute_error(ytest, y_prediction)
-    print("Testing error after bagging {}".format(testing_error))
+    testing_error = mlp_bagging_sk.compute_error(ytest, y_prediction)
+    print("Testing error after bagging with Sk learn model : {}".format(testing_error))
 
-    output = mlp.forward_propagate(Xtest)
+    """
+    Own implementation bagging
+    """
+    # mlp_bagging_own = ANN(num_cols, hiddle_layer, 1)
+    # y_prediction_own_bagging, sampling_y = mlp_bagging_own.bagging(Xtrain, ytrain)
+    # Error after bagging
+    # testing_error_own_imp = mlp_bagging_own.compute_error(sampling_y, y_prediction_own_bagging)
+    # print("Testing error after bagging with own learn model : {}".format(testing_error_own_imp))
 
-    print()
-    print("=========Testing with inputs {} and output got is {}=========".format(Xtest, output))
     
