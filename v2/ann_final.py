@@ -352,7 +352,7 @@ if __name__ == "__main__":
     smoke = pd.read_csv("./smoke.csv")
     smoke.head()
     smoke.drop(smoke.columns[[0, 1]], axis=1, inplace=True)
-
+    smoke.drop_duplicates(keep=False, inplace=True)
     smoke_copy = smoke.copy()
     X = smoke_copy.drop(columns=['Fire Alarm']).values
     sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
