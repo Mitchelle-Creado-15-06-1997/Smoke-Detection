@@ -27,7 +27,7 @@ class ANN(object):
 
     def __init__(self, number_of_inputs=4, hidden_layer=[4, 4], number_of_outputs=12):
         """
-            We construct the ANN by takes Inputs, Hidden layers (variable number) and output
+            We construct the ANN by takes Inputs, Hidden layers (variable number) and OUTPUT
 
         Args:
             number_of_inputs (int): Number of inputs
@@ -121,7 +121,7 @@ class ANN(object):
         """
         Confusion Matrix
         """
-        skplt.metrics.plot_confusion_matrix(ytest, mlp_clf.predict_proba(Xtest)[:,1].round())
+        skplt.metrics.plot_confusion_matrix(ytest, OUTPUT.round())
         plt.show()
 
         return {"Training Accuracy scores": results['train_accuracy'],
@@ -182,8 +182,8 @@ class ANN(object):
     #             sampling_x.append(x[r_index,:])
     #             sampling_y.append(y[r_index])
     #         self.train(sampling_x, sampling_y)
-    #         output = self.forward_propagate(sampling_x)
-    #         acc = accuracy_score(sampling_y, output.round(), normalize=True, sample_weight=None)
+    #         OUTPUT = self.forward_propagate(sampling_x)
+    #         acc = accuracy_score(sampling_y, OUTPUT.round(), normalize=True, sample_weight=None)
 
     #         if (acc_old_output < acc):
     #             acc_old_output = acc
@@ -243,7 +243,7 @@ class ANN(object):
             # save the activations for backpropogation
             self.activations[i + 1] = activations
 
-        # return output layer activation
+        # return OUTPUT layer activation
         return activations
 
     def back_propagate(self, error):
@@ -296,9 +296,9 @@ class ANN(object):
                 target = targets[j]
 
                 # activate the network!
-                output = self.forward_propagate(input)
+                OUTPUT = self.forward_propagate(input)
 
-                error = target - output
+                error = target - OUTPUT
 
                 self.back_propagate(error)
 
@@ -307,7 +307,7 @@ class ANN(object):
                 self.gradient_descent(learning_rate)
 
                 # keep track of the MSE for reporting later
-                sum_errors += self._mse(target, output)
+                sum_errors += self._mse(target, OUTPUT)
 
             # Epoch complete, report the training error
             print("Error: {} at epoch {}".format(sum_errors / len(Xtrain), i+1))
@@ -326,6 +326,25 @@ class ANN(object):
             derivatives = self.derivatives[i]
             weights += derivatives * learningRate
 
+    def feature_importance(self, Xtest, model) : 
+        f = []
+        for j in range(Xtest.shape[1]):
+            feature = mlp.get_feature_importance(j, 100, model)
+            f.append(feature)
+        # Plot
+        plt.figure(figsize=(10, 5))
+        plt.bar(range(Xtest.shape[1]), f, color="r", alpha=0.7)
+        plt.xticks(ticks=range(Xtest.shape[1]), labels = ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
+        'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
+        'NC0.5', 'NC1.0', 'NC2.5'])
+        # data = pd.DataFrame({"column1": ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
+        #    'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
+        #    'NC0.5', 'NC1.0', 'NC2.5']})
+        # data.plot(xticks=data.column1)
+        plt.xlabel("Feature")
+        plt.ylabel("Importance")
+        plt.title("Feature importances")
+        plt.show()
 
     def _sigmoid(self, x):
         """Sigmoid activation function
@@ -349,15 +368,15 @@ class ANN(object):
         return x * (1.0 - x)
 
 
-    def _mse(self, target, output):
+    def _mse(self, target, OUTPUT):
         """Mean Squared Error loss function
         Args:
             target (ndarray): The ground trut
-            output (ndarray): The predicted values
+            OUTPUT (ndarray): The predicted values
         Returns:
             (float): Output
         """
-        return np.average((target - output) ** 2)
+        return np.average((target - OUTPUT) ** 2)
     
     def feature_selection(self): 
         for i in range(1, 12) :
@@ -404,7 +423,7 @@ if __name__ == "__main__":
     # Find the best hidden layer
     post_score = 0
         
-    find_hiddle_layers = [[5], [4, 6, 2], [5, 7], [8, 6, 9], [9, 6, 3, 1, 5, 9, 2, 5, 6, 8, 8, 6, 8]]
+    find_hiddle_layers = [[5], [4, 6, 2], [5, 7], [8, 6, 9]]
     hiddle_layer = find_hiddle_layers[0]
     for i in range(len(find_hiddle_layers)):
         clf = MLPClassifier(hidden_layer_sizes=find_hiddle_layers[i], random_state=1, max_iter=300).fit(Xtrain, ytrain)
@@ -418,48 +437,10 @@ if __name__ == "__main__":
     # model
     model = mlp.model_ann(hiddle_layer)
 
-    # Feature importances - - (For feature importance please incomment the following lines of code)
-    """
-    # Start 
-    f = []
-    for j in range(Xtest.shape[1]):
-        feature = mlp.get_feature_importance(j, 100, model)
-        f.append(feature)
-    # Plot
-    plt.figure(figsize=(10, 5))
-    plt.bar(range(Xtest.shape[1]), f, color="r", alpha=0.7)
-    plt.xticks(ticks=range(Xtest.shape[1]), labels = ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
-       'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
-       'NC0.5', 'NC1.0', 'NC2.5', 'CNT'])
-    # data = pd.DataFrame({"column1": ['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
-    #    'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
-    #    'NC0.5', 'NC1.0', 'NC2.5', 'CNT']})
-    # data.plot(xticks=data.column1)
-    plt.xlabel("Feature")
-    plt.ylabel("Importance")
-    plt.title("Feature importances")
-    plt.show()
-
-    #end
-    """
-    details = mlp.roc_auc_cross_validation(model)
-
-    print("\n----Cross Validation----\n")
-    print(details)
-    print("\n")
-
-    mlp.train_test_curve(model)
-
     """
     Output
     """
-    output = mlp.forward_propagate(Xtest)
-    
-    accuracy_score_own_model = accuracy_score(ytest, output.round(), normalize=True, sample_weight=None)
-    print("Accuracy Score with own model: {}".format(accuracy_score_own_model))
-    print()
-    print("=========Testing with inputs {} and output got is {}=========".format(Xtest, output.round()))
-    
+    OUTPUT = mlp.forward_propagate(Xtest)
 
     """
     SK learn bagging
@@ -471,6 +452,22 @@ if __name__ == "__main__":
     # Error after bagging
     testing_error = mlp_bagging_sk.compute_error(ytest, y_prediction)
     print("Testing error after bagging with Sk learn model : {}".format(testing_error))
+
+    # Feature importances - - (For feature importance please incomment the following lines of code)
+    mlp.feature_importance(Xtest, model)
+
+    details = mlp.roc_auc_cross_validation(model)
+
+    print("\n----Cross Validation----\n")
+    print(details)
+    print("\n")
+
+    mlp.train_test_curve(model)
+    
+    accuracy_score_own_model = accuracy_score(ytest, OUTPUT.round(), normalize=True, sample_weight=None)
+    print("Accuracy Score with own model: {}".format(accuracy_score_own_model))
+    print()
+    print("=========Testing with inputs {} and OUTPUT got is {}=========".format(Xtest, OUTPUT.round()))
 
     """
     Feature selection
