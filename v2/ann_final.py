@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import roc_curve, roc_auc_score, f1_score, accuracy_score
+from sklearn.metrics import roc_curve, roc_auc_score, f1_score, accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import scikitplot as skplt
 import matplotlib.pyplot as plt
@@ -14,13 +14,18 @@ from sklearn.model_selection import learning_curve
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_validate
+from matplotlib import pyplot as py_plot
+from sklearn.feature_selection import SelectKBest
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 class ANN(object):
     """
     Artificial Neural Networks
     """
 
-    def __init__(self, number_of_inputs=4, hidden_layer=[4, 4], number_of_outputs=14):
+    def __init__(self, number_of_inputs=4, hidden_layer=[4, 4], number_of_outputs=12):
         """
             We construct the ANN by takes Inputs, Hidden layers (variable number) and output
 
@@ -43,9 +48,10 @@ class ANN(object):
         weights = []
         derivatives = []
         for i in range(len(cum_layers) - 1):
-            w = np.random.rand(cum_layers[i], cum_layers[i + 1])
+            w = np.random.uniform(low=0.1, high=0.5, size=(cum_layers[i], cum_layers[i + 1]))
+            # w = np.random.rand(cum_layers[i], cum_layers[i + 1])
             weights.append(w)
-
+           
             d = np.zeros((cum_layers[i], cum_layers[i + 1]))
             derivatives.append(d)
 
@@ -110,7 +116,13 @@ class ANN(object):
         Cross Validation
         """
         _scoring = ['accuracy', 'precision', 'recall', 'f1']
-        results = cross_validate(estimator=model,X=X,y=Y,cv=6,scoring=_scoring,return_train_score=True)
+        results = cross_validate(estimator=model,X=X,y=Y,cv=2,scoring=_scoring,return_train_score=True)
+
+        """
+        Confusion Matrix
+        """
+        skplt.metrics.plot_confusion_matrix(ytest, mlp_clf.predict_proba(Xtest)[:,1].round())
+        plt.show()
 
         return {"Training Accuracy scores": results['train_accuracy'],
               "Mean Training Accuracy": results['train_accuracy'].mean()*100,
@@ -183,9 +195,9 @@ class ANN(object):
         """
         bag_clf = BaggingClassifier(
         mlp_clf,
-        n_estimators=13,
+        n_estimators=12,
         max_samples=5,
-        max_features=13,
+        max_features=12,
         random_state=None,
         n_jobs=-1
         )
@@ -346,15 +358,31 @@ class ANN(object):
             (float): Output
         """
         return np.average((target - output) ** 2)
-
+    
+    def feature_selection(self): 
+        for i in range(1, 12) :
+            
+            selector = SelectKBest(k=i)
+            X_selected = selector.fit_transform(X,Y)
+            
+            X_selected_train, X_selected_test, y_train_fs, y_test_fs = train_test_split(X_selected, Y, test_size=0.25, random_state=42)
+            model = self.model_ann(3)
+            model.fit(X_selected_train,y_train_fs)
+            y_pred = model.predict(X_selected_test)
+            score = accuracy_score(y_test_fs, y_pred)
+            columns = selector.get_feature_names_out(['Temperature[C]', 'Humidity[%]', 'TVOC[ppb]',
+       'eCO2[ppm]', 'Raw H2', 'Raw Ethanol', 'Pressure[hPa]', 'PM1.0', 'PM2.5',
+       'NC0.5', 'NC1.0', 'NC2.5'])
+            print("The accuracy with {} features is {}".format(columns, score))
 
 if __name__ == "__main__":
     smoke = pd.read_csv("./smoke.csv")
+    
     smoke.head()
     smoke.drop(smoke.columns[[0, 1]], axis=1, inplace=True)
     smoke.drop_duplicates(keep=False, inplace=True)
     smoke_copy = smoke.copy()
-    X = smoke_copy.drop(columns=['Fire Alarm']).values
+    X = smoke_copy.drop(columns=['Fire Alarm', 'CNT']).values
     sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
     new_feature = sel.fit_transform(X)
     Y = smoke_copy['Fire Alarm'].values 
@@ -376,7 +404,7 @@ if __name__ == "__main__":
     # Find the best hidden layer
     post_score = 0
         
-    find_hiddle_layers = [[13], [14], [11]]
+    find_hiddle_layers = [[5], [4, 6, 2], [5, 7], [8, 6, 9], [9, 6, 3, 1, 5, 9, 2, 5, 6, 8, 8, 6, 8]]
     hiddle_layer = find_hiddle_layers[0]
     for i in range(len(find_hiddle_layers)):
         clf = MLPClassifier(hidden_layer_sizes=find_hiddle_layers[i], random_state=1, max_iter=300).fit(Xtrain, ytrain)
@@ -445,12 +473,6 @@ if __name__ == "__main__":
     print("Testing error after bagging with Sk learn model : {}".format(testing_error))
 
     """
-    Own implementation bagging
+    Feature selection
     """
-    # mlp_bagging_own = ANN(num_cols, hiddle_layer, 1)
-    # y_prediction_own_bagging, sampling_y = mlp_bagging_own.bagging(Xtrain, ytrain)
-    # Error after bagging
-    # testing_error_own_imp = mlp_bagging_own.compute_error(sampling_y, y_prediction_own_bagging)
-    # print("Testing error after bagging with own learn model : {}".format(testing_error_own_imp))
-
-    
+    mlp.feature_selection()
