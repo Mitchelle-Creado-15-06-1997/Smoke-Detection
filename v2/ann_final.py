@@ -1,5 +1,5 @@
 import numpy as np
-from random import random, randrange
+from random import random, randrange, seed
 import random
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -86,8 +86,6 @@ class ANN(object):
         """
         roc_auc
         """
-        
-        mlp_clf.fit(Xtrain, ytrain)
         # calculate roc curve
         fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
         print("FPR RF with sklearn model: {} \n".format(fpr_rf))
@@ -121,7 +119,7 @@ class ANN(object):
         """
         Confusion Matrix
         """
-        skplt.metrics.plot_confusion_matrix(ytest, OUTPUT.round())
+        skplt.metrics.plot_confusion_matrix(ytest, mlp_clf.predict_proba(Xtest)[:,1].round())
         plt.show()
 
         return {"Training Accuracy scores": results['train_accuracy'],
@@ -170,24 +168,6 @@ class ANN(object):
     def model_ann(self, hidden):
         mlp_clf = MLPClassifier(hidden_layer_sizes=hidden, max_iter = 1000,activation = 'logistic', solver = 'adam')
         return mlp_clf
-
-    # def bagging(self, x, y, number_samples=5): 
-    #     bag = []
-    #     acc_old_output = 0
-    #     for i in range(number_samples):
-    #         sampling_x = []
-    #         sampling_y = []
-    #         for item in range(y.size):
-    #             r_index = random.randrange(y.size)
-    #             sampling_x.append(x[r_index,:])
-    #             sampling_y.append(y[r_index])
-    #         self.train(sampling_x, sampling_y)
-    #         OUTPUT = self.forward_propagate(sampling_x)
-    #         acc = accuracy_score(sampling_y, OUTPUT.round(), normalize=True, sample_weight=None)
-
-    #         if (acc_old_output < acc):
-    #             acc_old_output = acc
-    #     return acc_old_output, sampling_y
         
     def bagging_sklearn(self, mlp_clf):
         """
@@ -296,9 +276,9 @@ class ANN(object):
                 target = targets[j]
 
                 # activate the network!
-                OUTPUT = self.forward_propagate(input)
+                output = self.forward_propagate(input)
 
-                error = target - OUTPUT
+                error = target - output
 
                 self.back_propagate(error)
 
@@ -307,7 +287,7 @@ class ANN(object):
                 self.gradient_descent(learning_rate)
 
                 # keep track of the MSE for reporting later
-                sum_errors += self._mse(target, OUTPUT)
+                sum_errors += self._mse(target, output)
 
             # Epoch complete, report the training error
             print("Error: {} at epoch {}".format(sum_errors / len(Xtrain), i+1))
@@ -329,7 +309,7 @@ class ANN(object):
     def feature_importance(self, Xtest, model) : 
         f = []
         for j in range(Xtest.shape[1]):
-            feature = mlp.get_feature_importance(j, 100, model)
+            feature = mlp.get_feature_importance(j, 6000, model)
             f.append(feature)
         # Plot
         plt.figure(figsize=(10, 5))
@@ -368,7 +348,7 @@ class ANN(object):
         return x * (1.0 - x)
 
 
-    def _mse(self, target, OUTPUT):
+    def _mse(self, target, output):
         """Mean Squared Error loss function
         Args:
             target (ndarray): The ground trut
@@ -376,7 +356,7 @@ class ANN(object):
         Returns:
             (float): Output
         """
-        return np.average((target - OUTPUT) ** 2)
+        return np.average((target - output) ** 2)
     
     def feature_selection(self): 
         for i in range(1, 12) :
@@ -436,25 +416,26 @@ if __name__ == "__main__":
     
     # model
     model = mlp.model_ann(hiddle_layer)
-
+    model.fit(Xtrain, ytrain)
     """
     Output
     """
-    OUTPUT = mlp.forward_propagate(Xtest)
+    mlp.train(Xtrain, ytrain, 10, 0.1)
+    output = mlp.forward_propagate(Xtest)
 
     """
     SK learn bagging
     """
     print("\n\n================================SK BAGGING=======================================\n\n")
     mlp_bagging_sk = ANN(num_cols, hiddle_layer, 1)
-    y_prediction = mlp_bagging_sk.bagging_sklearn(model)
+    Y_PRED = mlp_bagging_sk.bagging_sklearn(model)
 
     # Error after bagging
-    testing_error = mlp_bagging_sk.compute_error(ytest, y_prediction)
+    testing_error = mlp_bagging_sk.compute_error(ytest, Y_PRED)
     print("Testing error after bagging with Sk learn model : {}".format(testing_error))
 
     # Feature importances - - (For feature importance please incomment the following lines of code)
-    mlp.feature_importance(Xtest, model)
+    # mlp.feature_importance(Xtest, model)
 
     details = mlp.roc_auc_cross_validation(model)
 
@@ -464,10 +445,10 @@ if __name__ == "__main__":
 
     mlp.train_test_curve(model)
     
-    accuracy_score_own_model = accuracy_score(ytest, OUTPUT.round(), normalize=True, sample_weight=None)
+    accuracy_score_own_model = accuracy_score(ytest, output.round(), normalize=True, sample_weight=None)
     print("Accuracy Score with own model: {}".format(accuracy_score_own_model))
     print()
-    print("=========Testing with inputs {} and OUTPUT got is {}=========".format(Xtest, OUTPUT.round()))
+    print("=========Testing with inputs {} and OUTPUT got is {}=========".format(Xtest, output.round()))
 
     """
     Feature selection
