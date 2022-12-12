@@ -287,7 +287,7 @@ class ANN(object):
     def feature_importance(self, Xtest, model) : 
         f = []
         for j in range(Xtest.shape[1]):
-            feature = mlp.get_feature_importance(j, 6000, model)
+            feature = mlp.get_feature_importance(j, 60, model)
             f.append(feature)
         # Plot
         plt.figure(figsize=(10, 5))
