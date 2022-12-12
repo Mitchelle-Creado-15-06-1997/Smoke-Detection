@@ -82,7 +82,7 @@ class ANN(object):
         roc_auc
         """
         # calculate roc curve
-        false_positive, true_positive, thresholds = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
+        false_positive, true_positive, thresholds = roc_curve(ytest, Y_PRED.round())
         print("FPR RF with sklearn model: {} \n".format(false_positive))
         print("TPR RF with sklearn model: {} \n".format(true_positive))
         print("THRESHOLD RF with sklearn model: {} \n".format(thresholds))
