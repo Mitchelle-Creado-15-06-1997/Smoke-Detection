@@ -218,3 +218,69 @@ DERIVATES : [array([[0., 0., 0., 0., 0., 0., 0., 0.],
 
 ACTIVATIONS : [array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]), array([0., 0., 0., 0., 0., 0., 0., 0.]), array([0., 0., 0., 0., 0., 0.]), array([0., 0., 0., 0., 0., 0., 0., 0., 0.]), array([0.])] 
 
+Testing error after bagging with Sk learn model : 0.284401390958768
+FPR RF with sklearn model: [0.         0.93630692 0.93636931 0.93636931 0.93649407 0.93649407
+ 0.93649407 0.93649407 0.94217093 0.94217093 0.94223331 0.94223331
+ 0.94242046 0.96394261 0.96394261 0.96394261 0.96394261 0.96419214
+ 0.98103556 0.98259513 0.98259513 0.98284467 0.98284467 0.98284467
+ 0.98284467 0.98284467 0.98328135 0.98353088 0.98540237 0.98552714
+ 0.98552714 0.98665003 0.99463506 0.99500936 0.99968808 0.99968808
+ 0.99968808 0.99981285 1.         1.        ] 
+
+TPR RF with sklearn model: [0.         0.99154559 0.99154559 0.99157039 0.99157039 0.99166956
+ 0.99261169 0.99263649 0.99263649 0.99271086 0.99419844 0.99429761
+ 0.99429761 0.99514058 0.99516537 0.99563644 0.99568602 0.99568602
+ 0.99568602 0.99568602 0.9957604  0.9957604  0.99578519 0.99749591
+ 0.9975455  0.99826449 0.99826449 0.99826449 0.99826449 0.99826449
+ 0.99833887 0.99833887 0.99833887 0.99833887 0.99846284 0.99853721
+ 0.9996529  0.9996529  0.9996529  1.        ] 
+
+THRESHOLD RF with sklearn model: [1.70614586 0.70614586 0.70614586 0.70614586 0.70614586 0.70525016
+ 0.70277839 0.70277839 0.70260329 0.70012926 0.70012926 0.70012923
+ 0.69907883 0.69907883 0.69907883 0.69838254 0.69838254 0.69731326
+ 0.69731326 0.69610493 0.69610492 0.69590566 0.69572883 0.69572883
+ 0.69558435 0.69538106 0.69317572 0.69185631 0.69185631 0.69185631
+ 0.69143911 0.6900771  0.6900771  0.68863237 0.68863237 0.68779798
+ 0.68779784 0.68548753 0.6854875  0.6802389 ] 
+
+AUC with sklearn model: 0.528 
+
+Accuracy Score with sklearn model: 0.715598609041232
+
+----Cross Validation----
+
+{'Training Accuracy scores': array([0.97180085, 0.71465526]), 'Mean Training Accuracy': 84.32280522466706, 'Training Precision scores': array([0.97331337, 0.71465526]), 'Mean Training Precision': 0.8439843123717228, 'Training Recall scores': array([0.98762232, 1.        ]), 'Mean Training Recall': 0.993811162250324, 'Training F1 scores': array([0.98041564, 0.83358477]), 'Mean Training F1 Score': 0.9070002064970245, 'Validation Accuracy scores': array([0.85446939, 0.71468719]), 'Mean Validation Accuracy': 78.45782901670233, 'Validation Precision scores': array([0.83239452, 0.71468719]), 'Mean Validation Precision': 0.773540857221054, 'Validation Recall scores': array([0.99714005, 1.        ]), 'Mean Validation Recall': 0.9985700241308428, 'Validation F1 scores': array([0.9073498, 0.8336065]), 'Mean Validation F1 Score': 0.8704781490405658}
+
+
+Accuracy Score with own model: 0.715598609041232
+
+=========Testing with inputs [[2.5530e+01 5.0030e+01 8.5400e+02 ... 1.5230e+01 2.3760e+00 5.4000e-02]
+ [2.6764e+01 5.5320e+01 1.4000e+01 ... 2.6600e+00 4.1400e-01 9.0000e-03]
+ [2.4650e+01 5.3140e+01 1.1640e+03 ... 1.0080e+01 1.5720e+00 3.5000e-02]
+ ...
+ [1.4576e+01 4.9800e+01 1.1240e+03 ... 1.3660e+01 2.1300e+00 4.8000e-02]
+ [2.1330e+01 4.5190e+01 1.7400e+02 ... 4.7700e+00 7.4400e-01 1.7000e-02]
+ [2.6060e+01 7.3520e+01 1.4170e+03 ... 6.3500e+00 9.9000e-01 2.2000e-02]] and OUTPUT got is [[1.]
+ [1.]
+ [1.]
+ ...
+ [1.]
+ [1.]
+ [1.]]=========
+The accuracy with ['Humidity[%]'] features is 0.8326627067765217
+The accuracy with ['Humidity[%]' 'Raw Ethanol'] features is 0.7149517787571055
+The accuracy with ['Humidity[%]' 'Raw Ethanol' 'Pressure[hPa]'] features is 0.7149517787571055
+The accuracy with ['Humidity[%]' 'TVOC[ppb]' 'Raw Ethanol' 'Pressure[hPa]'] features is 0.7559558025164463
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'Raw Ethanol' 'Pressure[hPa]'] features is 0.7149517787571055
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'Raw Ethanol' 'Pressure[hPa]'
+ 'NC0.5'] features is 0.7564028868876541
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'Raw Ethanol' 'Pressure[hPa]'
+ 'PM1.0' 'NC0.5'] features is 0.7566583636712014
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'Raw H2' 'Raw Ethanol'
+ 'Pressure[hPa]' 'PM1.0' 'NC0.5'] features is 0.7544229418151626
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'eCO2[ppm]' 'Raw H2'
+ 'Raw Ethanol' 'Pressure[hPa]' 'PM1.0' 'NC0.5'] features is 0.7587021779395797
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'eCO2[ppm]' 'Raw H2'
+ 'Raw Ethanol' 'Pressure[hPa]' 'PM1.0' 'PM2.5' 'NC0.5'] features is 0.7359008750079836
+The accuracy with ['Temperature[C]' 'Humidity[%]' 'TVOC[ppb]' 'eCO2[ppm]' 'Raw H2'
+ 'Raw Ethanol' 'Pressure[hPa]' 'PM1.0' 'PM2.5' 'NC0.5' 'NC1.0'] features is 0.7550616337740308

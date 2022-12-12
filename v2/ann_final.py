@@ -1,23 +1,18 @@
 import numpy as np
-from random import random, randrange, seed
-import random
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import roc_curve, roc_auc_score, f1_score, accuracy_score, confusion_matrix
+from sklearn.metrics import roc_curve, roc_auc_score, accuracy_score
 import matplotlib.pyplot as plt
 import scikitplot as skplt
 import matplotlib.pyplot as plt
 from sklearn.ensemble import BaggingClassifier
 from sklearn.model_selection import learning_curve
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_validate
-from matplotlib import pyplot as py_plot
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 class ANN(object):
@@ -30,9 +25,9 @@ class ANN(object):
             We construct the ANN by takes Inputs, Hidden layers (variable number) and OUTPUT
 
         Args:
-            number_of_inputs (int): Number of inputs
-            hidden_layer (list): A list of ints for the hidden layers
-            number_of_outputs (int): Number of outputs
+            number_of_inputs: Number of inputs
+            hidden_layer: A list of ints for the hidden layers
+            number_of_outputs: Number of outputs
         """
         print("HIDDEN LAYERS: {} \n".format(hidden_layer))
         self.number_of_inputs = number_of_inputs
@@ -48,10 +43,10 @@ class ANN(object):
         weights = []
         derivatives = []
         for i in range(len(cum_layers) - 1):
+            #weights
             w = np.random.uniform(low=0.1, high=0.5, size=(cum_layers[i], cum_layers[i + 1]))
-            # w = np.random.rand(cum_layers[i], cum_layers[i + 1])
             weights.append(w)
-           
+            #derivatives
             d = np.zeros((cum_layers[i], cum_layers[i + 1]))
             derivatives.append(d)
 
@@ -87,10 +82,10 @@ class ANN(object):
         roc_auc
         """
         # calculate roc curve
-        fpr_rf, tpr_rf, thresholds_rf = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
-        print("FPR RF with sklearn model: {} \n".format(fpr_rf))
-        print("TPR RF with sklearn model: {} \n".format(tpr_rf))
-        print("THRESHOLD RF with sklearn model: {} \n".format(thresholds_rf))
+        false_positive, true_positive, thresholds = roc_curve(ytest, mlp_clf.predict_proba(Xtest)[:,1])
+        print("FPR RF with sklearn model: {} \n".format(false_positive))
+        print("TPR RF with sklearn model: {} \n".format(true_positive))
+        print("THRESHOLD RF with sklearn model: {} \n".format(thresholds))
 
         """
         Plot ROC 
@@ -113,8 +108,8 @@ class ANN(object):
         """
         Cross Validation
         """
-        _scoring = ['accuracy', 'precision', 'recall', 'f1']
-        results = cross_validate(estimator=model,X=X,y=Y,cv=2,scoring=_scoring,return_train_score=True)
+        _scoring_cv = ['accuracy', 'precision', 'recall', 'f1']
+        results = cross_validate(estimator=model,X=X,y=Y,cv=2,scoring=_scoring_cv,return_train_score=True)
 
         """
         Confusion Matrix
@@ -122,22 +117,15 @@ class ANN(object):
         skplt.metrics.plot_confusion_matrix(ytest, mlp_clf.predict_proba(Xtest)[:,1].round())
         plt.show()
 
-        return {"Training Accuracy scores": results['train_accuracy'],
-              "Mean Training Accuracy": results['train_accuracy'].mean()*100,
-              "Training Precision scores": results['train_precision'],
-              "Mean Training Precision": results['train_precision'].mean(),
-              "Training Recall scores": results['train_recall'],
-              "Mean Training Recall": results['train_recall'].mean(),
-              "Training F1 scores": results['train_f1'],
-              "Mean Training F1 Score": results['train_f1'].mean(),
-              "Validation Accuracy scores": results['test_accuracy'],
-              "Mean Validation Accuracy": results['test_accuracy'].mean()*100,
-              "Validation Precision scores": results['test_precision'],
-              "Mean Validation Precision": results['test_precision'].mean(),
-              "Validation Recall scores": results['test_recall'],
-              "Mean Validation Recall": results['test_recall'].mean(),
-              "Validation F1 scores": results['test_f1'],
-              "Mean Validation F1 Score": results['test_f1'].mean()
+        return {
+              "Training Accuracy (Mean) --> ": results['train_accuracy'].mean()*100,
+              "Training Precision (Mean) -->": results['train_precision'].mean(),
+              "Training Recall (Mean) -->": results['train_recall'].mean(),
+              "Training F1 Score (Mean) -->": results['train_f1'].mean(),
+              "Validation Accuracy (Mean) -->": results['test_accuracy'].mean()*100,
+              "Validation Precision (Mean) -->": results['test_precision'].mean(),
+              "Validation Recall (Mean) -->": results['test_recall'].mean(),
+              "Validation F1 Score (Mean)-->": results['test_f1'].mean()
               }
 
     def train_test_curve(self, mlp_clf):
@@ -145,22 +133,22 @@ class ANN(object):
         Train test curve
         """
 
-        train_sizes, train_scores, test_scores = learning_curve(estimator = mlp_clf,X = Xtrain, y = ytrain, train_sizes = [1, 14, 17], cv = 5)
-        train_mean = np.mean(train_scores, axis=1)
-        train_std = np.std(train_scores, axis=1)
-        test_mean = np.mean(test_scores, axis=1)
-        test_std = np.std(test_scores, axis=1)
+        training_sizes, training_scores, testing_scores = learning_curve(estimator = mlp_clf,X = Xtrain, y = ytrain, train_sizes = [1, 14, 17], cv = 5)
+        training_mean = np.mean(training_scores, axis=1)
+        training_std = np.std(training_scores, axis=1)
+        testing_mean = np.mean(testing_scores, axis=1)
+        testing_std = np.std(testing_scores, axis=1)
 
         #
         # Plot the learning curve
         #
-        plt.plot(train_sizes, train_mean, color='blue', marker='o', markersize=5, label='Training Accuracy')
-        plt.fill_between(train_sizes, train_mean + train_std, train_mean - train_std, alpha=0.15, color='blue')
-        plt.plot(train_sizes, test_mean, color='green', marker='+', markersize=5, linestyle='--', label='Validation Accuracy')
-        plt.fill_between(train_sizes, test_mean + test_std, test_mean - test_std, alpha=0.15, color='green')
-        plt.title('Learning Curve')
-        plt.xlabel('Training Data Size')
-        plt.ylabel('Model accuracy')
+        plt.plot(training_sizes, training_mean, color='blue', marker='o', markersize=5, label='Training Accuracy --> ')
+        plt.fill_between(training_sizes, training_mean + training_std, training_mean - training_std, alpha=0.15, color='blue')
+        plt.plot(training_sizes, testing_mean, color='green', marker='+', markersize=5, linestyle='--', label='Validation Accuracy --> ')
+        plt.fill_between(training_sizes, testing_mean + testing_std, testing_mean - testing_std, alpha=0.15, color='green')
+        plt.title('Learning Curve Plot')
+        plt.xlabel('Data Size (Training)')
+        plt.ylabel('Accuracy of Model')
         plt.grid()
         plt.legend(loc='lower right')
         plt.show()
@@ -197,89 +185,81 @@ class ANN(object):
         return float(error_count)/float(total_count)
 
     def forward_propagate(self, inputs):
-        """Computes forward propagation of the network based on input signals.
+        """Forward propagation of the Neural Network based on Inputs
 
-        Args:
-            inputs (ndarray): Input signals
-        Returns:
-            activations (ndarray): Output values
+        Input arg : Input to the neural network 
+        Output : Activation 
         """
 
-        # the input layer activation is just the input itself
+        # The activation to the I/P layer is the I/P layer itself.
         activations = inputs
 
-        # save the activations for backpropogation
+        # Activations for backpropogation
         self.activations[0] = activations
 
-        # iterate through the network layers
-        for i, w in enumerate(self.weights):
-            # calculate matrix multiplication between previous activation and weight matrix
+        # Network layer iteration
+        for index, weights in enumerate(self.weights):
+            # Matrix multiplication between previous activation and weight matrix
             
-            net_inputs = np.dot(activations, w)
+            net_inputs = np.dot(activations, weights)
 
-            # apply sigmoid activation function
+            # Sigmoid activation function
             activations = self._sigmoid(net_inputs)
 
-            # save the activations for backpropogation
-            self.activations[i + 1] = activations
+            # Backpropogation activations saved
+            self.activations[index + 1] = activations
 
-        # return OUTPUT layer activation
+        # O/P layer activation.
         return activations
 
     def back_propagate(self, error):
-        """Backpropogates an error signal.
-        Args:
-            error (ndarray): The error to backprop.
-        Returns:
-            error (ndarray): The final error of the input
+        """Backpropogate error signal.
+            Args: The error to backpropogate.
+            O/P: The final error of the input
         """
 
-        # iterate backwards through the network layers
+        # Network layer iterations - backwards
         for i in reversed(range(len(self.derivatives))):
 
-            # get activation for previous layer
+            # Activation - previous layer
             activations = self.activations[i+1]
 
-            # apply sigmoid derivative function
-            delta = error * self._sigmoid_derivative(activations)
+            # Sigmoid derivative function
+            delta_value = error * self._sigmoid_derivative(activations)
 
-            # reshape delta as to have it as a 2d array
-            delta_re = delta.reshape(delta.shape[0], -1).T
+            # reshape delta
+            delta_reshape = delta_value.reshape(delta_value.shape[0], -1).T
 
-            # get activations for current layer
-            current_activations = self.activations[i]
+            # Activations - current layer
+            current_layer_activations = self.activations[i]
 
-            # reshape activations as to have them as a 2d column matrix
-            current_activations = current_activations.reshape(current_activations.shape[0],-1)
+            # Reshape activations
+            current_layer_activations = current_layer_activations.reshape(current_layer_activations.shape[0],-1)
 
-            # save derivative after applying matrix multiplication
-            self.derivatives[i] = np.dot(current_activations, delta_re)
+            # Matrix multiplication
+            self.derivatives[i] = np.dot(current_layer_activations, delta_reshape)
 
             # backpropogate the next error
-            error = np.dot(delta, self.weights[i].T)
+            error = np.dot(delta_value, self.weights[i].T)
 
 
     def train(self, inputs, targets, epochs = 5, learning_rate = 1):
-        """Trains model running forward prop and backprop
-        Args:
-            inputs (ndarray): X
-            targets (ndarray): Y
-            epochs (int): Num. epochs we want to train the network for
-            learning_rate (float): Step to apply to gradient descent
+        """Trains model - it runs forward and backward propogation
         """
-        # now enter the training loop
         for i in range(epochs):
             sum_errors = 0
 
-            # iterate through all the training data
+            # Training data
             for j, input in enumerate(inputs):
-                target = targets[j]
+                target_value = targets[j]
 
-                # activate the network!
+                # Forward propogation 
                 output = self.forward_propagate(input)
 
-                error = target - output
+                # calculate error
+                error = target_value - output
 
+                # back propogation
                 self.back_propagate(error)
 
                 # now perform gradient descent on the derivatives
@@ -287,24 +267,22 @@ class ANN(object):
                 self.gradient_descent(learning_rate)
 
                 # keep track of the MSE for reporting later
-                sum_errors += self._mse(target, output)
+                sum_errors += self._mse(target_value, output)
 
             # Epoch complete, report the training error
-            print("Error: {} at epoch {}".format(sum_errors / len(Xtrain), i+1))
+            print("Error {} at epoch {} ".format(sum_errors / len(Xtrain), i+1))
 
         print("=====***====Training complete!=====***====")
 
 
-    def gradient_descent(self, learningRate=1):
-        """Learns by descending the gradient
-        Args:
-            learningRate (float): How fast to learn.
+    def gradient_descent(self, learning_rate=1):
         """
-        # update the weights by stepping down the gradient
+        Learns by descending the gradient
+        """
         for i in range(len(self.weights)):
             weights = self.weights[i]
             derivatives = self.derivatives[i]
-            weights += derivatives * learningRate
+            weights += derivatives * learning_rate
 
     def feature_importance(self, Xtest, model) : 
         f = []
@@ -327,11 +305,8 @@ class ANN(object):
         plt.show()
 
     def _sigmoid(self, x):
-        """Sigmoid activation function
-        Args:
-            x (float): Value to be processed
-        Returns:
-            y (float): Output
+        """
+        Sigmoid activation function
         """
 
         y = 1.0 / (1 + np.exp(-x))
@@ -339,24 +314,17 @@ class ANN(object):
 
 
     def _sigmoid_derivative(self, x):
-        """Sigmoid derivative function
-        Args:
-            x (float): Value to be processed
-        Returns:
-            y (float): Output
+        """
+        Sigmoid derivative function
         """
         return x * (1.0 - x)
 
 
-    def _mse(self, target, output):
-        """Mean Squared Error loss function
-        Args:
-            target (ndarray): The ground trut
-            OUTPUT (ndarray): The predicted values
-        Returns:
-            (float): Output
+    def _mse(self, target_value, output):
         """
-        return np.average((target - output) ** 2)
+        Mean Squared Error  
+        """
+        return np.average((target_value - output) ** 2)
     
     def feature_selection(self): 
         for i in range(1, 12) :
@@ -392,10 +360,10 @@ if __name__ == "__main__":
     Xtrain = sc.transform(Xtrain)
     Xtest = sc.transform(Xtest)
 
-    print(f"The Shape of train set = {Xtrain.shape} \n")
-    print(f"The Shape of test set = {Xtest.shape} \n")
-    print(f"The Shape of train label = {ytrain.shape} \n")
-    print(f"The Shape of test labels = {ytest.shape} \n")
+    print(f"Train set (Shape)= {Xtrain.shape} \n")
+    print(f"Test set (Shape)= {Xtest.shape} \n")
+    print(f"Train label (Shape)= {ytrain.shape} \n")
+    print(f"Test labels (Shape)= {ytest.shape} \n")
 
     Xtrain, Xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.90, random_state=2, shuffle=True)
     num_rows, num_cols = Xtrain.shape
